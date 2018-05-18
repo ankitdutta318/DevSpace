@@ -5,6 +5,7 @@ const router = express.Router();
 const gravatar = require('gravatar');
 const bcrpyt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const passport = require('passport');
 const keys = require('../../config/keys')
 
 // Load user model
@@ -22,8 +23,8 @@ router.get('/test', (req, res) => res.json({
 //  @accsess    Public
 router.post('/register', (req, res) => {
     User.findOne({
-            email: req.body.email
-        })
+        email: req.body.email
+    })
         .then(user => {
             if (user) {
                 return res.status(400).json({
@@ -66,8 +67,8 @@ router.post('/login', (req, res) => {
 
     // Find user by email
     User.findOne({
-            email
-        })
+        email
+    })
         .then(user => {
             // Check for User existing
             if (!user) {
@@ -107,6 +108,17 @@ router.post('/login', (req, res) => {
 
                 })
         })
+});
+
+//  @route      GET api/users/current
+//  @desc       Return current user
+//  @accsess    Private
+router.get('/current', passport.authenticate('jwt', { session: false }), (req, res) => {
+    res.json({
+        id: req.user.id,
+        name: req.user.name,
+        email: req.user.email
+    });
 });
 
 module.exports = router;

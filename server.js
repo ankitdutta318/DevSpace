@@ -6,6 +6,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
+const passport = require('passport');
 
 const users = require('./routes/api/users');
 const profile = require('./routes/api/profile');
@@ -20,17 +21,29 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(bodyParser.json());
 
+// Database connection and configuration
+// ============================================================================
 // DB config
 const db = require('./config/keys').mongoURI;
 
 // Connect to MongoDB
-mongoose.connect(db)
+mongoose
+    .connect(db)
     .then(() => console.log('MongoDB connected.'))
     .catch(err => console.log(err));
 
+
+// Passport Congiguation
+// =============================================================================
+// Passport Middleware
+app.use(passport.initialize());
+
+// Passport Config
+require('./config/passport')(passport);
+
 // ROUTES FOR OUR API
 // =============================================================================
-app.get('/', (req, res) => res.send('Hello World'));
+app.get('/', (req, res) => res.send('Hello World! Welcome to DevSpace. A platform for developer to share knowledge and showcase their skills.'));
 
 // Use routes
 app.use('/api/users', users);
