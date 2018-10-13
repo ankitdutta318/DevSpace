@@ -6,7 +6,11 @@ const gravatar = require('gravatar');
 const bcrpyt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
-const keys = require('../../config/keys')
+const keys = require('../../config/keys');
+
+// Load Input validation
+const validateRegisterInput = require('../../validation/register');
+const validateLoginInput = require('../../validation/login');
 
 // Load user model
 const User = require('../../models/User');
@@ -22,14 +26,23 @@ router.get('/test', (req, res) => res.json({
 //  @desc       Register new users
 //  @accsess    Public
 router.post('/register', (req, res) => {
+    const {
+        errors,
+        isValid
+    } = validateRegisterInput(req.body);
+
+    // Check validation
+    if (!isValid) {
+        return res.status(400).json(errors);
+    }
+
     User.findOne({
-        email: req.body.email
-    })
+            email: req.body.email
+        })
         .then(user => {
             if (user) {
-                return res.status(400).json({
-                    email: 'Email already exists.'
-                });
+                errors.email = 'Email already exists';
+                return res.status(400).json(errors);
             } else {
                 const avatar = gravatar.url({
                     s: '200', // Size
@@ -62,19 +75,29 @@ router.post('/register', (req, res) => {
 //  @desc       Login User / Return JWT token
 //  @accsess    Public
 router.post('/login', (req, res) => {
+
+    const {
+        errors,
+        isValid
+    } = validateLoginInput(req.body);
+
+    // Check validation
+    if (!isValid) {
+        return res.status(400).json(errors);
+    }
+
     const email = req.body.email;
     const password = req.body.password;
 
     // Find user by email
     User.findOne({
-        email
-    })
+            email
+        })
         .then(user => {
             // Check for User existing
             if (!user) {
-                return res.status(404).json({
-                    email: 'Username/Email not found.'
-                });
+                errors.email = 'User not found';
+                return res.status(404).json(errors);
             }
 
             // Check password 
@@ -101,9 +124,8 @@ router.post('/login', (req, res) => {
                                 })
                             });
                     } else {
-                        return res.status(400).json({
-                            password: 'Password incorrect.'
-                        });
+                        errors.password = 'Password incorrect';
+                        return res.status(400).json(errors);
                     }
 
                 })
@@ -113,7 +135,9 @@ router.post('/login', (req, res) => {
 //  @route      GET api/users/current
 //  @desc       Return current user
 //  @accsess    Private
-router.get('/current', passport.authenticate('jwt', { session: false }), (req, res) => {
+router.get('/current', passport.authenticate('jwt', {
+    session: false
+}), (req, res) => {
     res.json({
         id: req.user.id,
         name: req.user.name,
