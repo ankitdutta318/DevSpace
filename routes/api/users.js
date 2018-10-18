@@ -14,6 +14,8 @@ const validateLoginInput = require('../../validation/login');
 
 // Load user model
 const User = require('../../models/User');
+// Load profile model
+const Profile = require('../../models/Profile');
 
 //  @route      GET api/users/test
 //  @desc       Test users route
@@ -143,6 +145,25 @@ router.get('/current', passport.authenticate('jwt', {
         name: req.user.name,
         email: req.user.email
     });
+});
+
+//  @route      DELETE api/user
+//  @desc       Delete user and profile
+//  @accsess    Private
+router.delete('/', passport.authenticate('jwt', {
+    session: false
+}), (req, res) => {
+    Profile.findOneAndRemove({
+            user: req.user.id
+        })
+        .then(() => {
+            User.findOneAndRemove({
+                    _id: req.user.id
+                })
+                .then(() => res.json({
+                    success: true
+                }));
+        });
 });
 
 module.exports = router;
